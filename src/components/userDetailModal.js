@@ -1,4 +1,6 @@
- const UserDetailModal = ({ isOpen, onClose, user, onDelete }) => {
+import axios from "axios";
+
+const UserDetailModal = ({ isOpen, onClose, user, onDelete, markAsPaid }) => {
   if (!isOpen) return null;
 
   return (
@@ -41,6 +43,15 @@
             Delete
           </button>
           <button
+            className="px-4 py-2 bg-blue-500 ml-2 text-white rounded"
+            onClick={() => {
+              markAsPaid(user);
+              onClose();
+            }}
+          >
+            {user.isPaid ? "Mark as Unpaid" : "Mark as Paid"}
+          </button>
+          <button
             className="px-4 py-2 bg-gray-300 rounded ml-2"
             onClick={onClose}
           >
@@ -52,7 +63,4 @@
   );
 };
 
-
-
-
-export default UserDetailModal
+export default UserDetailModal;

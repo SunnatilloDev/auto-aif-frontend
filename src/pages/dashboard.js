@@ -83,51 +83,6 @@ const Dashboard = () => {
     router.push("/login");
   };
 
-  const handleEditClick = (userId, field) => {
-    setEditingUser({ userId, field });
-  };
-
-  const handleInputChange = (e, userId, field) => {
-    const updatedUsers = users.map((user) =>
-      user?._id === userId ? { ...user, [field]: e.target.value } : user
-    );
-    setUsers(updatedUsers);
-  };
-
-  const handleInputBlur = async (userId, field) => {
-    const userToUpdate = users.find((user) => user?._id === userId);
-
-    try {
-      await axios.put(
-        `http://18.215.243.4:3000/user/${userId}`,
-        {
-          [field]: userToUpdate[field],
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            login: admin?.login,
-            password: admin?.password,
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Failed to update user:", error);
-    }
-
-    setEditingUser(null);
-  };
-
-  const handleDoubleTap = (userId, field) => {
-    const currentTime = Date.now();
-    const tapLength = currentTime - lastTap;
-
-    if (tapLength < 300 && tapLength > 0) {
-      handleEditClick(userId, field);
-    }
-    setLastTap(currentTime);
-  };
-
   const handleRowClick = (user) => {
     setSelectedUser(user);
     setModalOpen(true);
@@ -176,6 +131,30 @@ const Dashboard = () => {
 
   const getIncome = () => {
     return users.filter((user) => user.isPaid).length * 20;
+  };
+  let markAsPaid = (userI) => {
+    let isPaid = !userI.isPaid;
+    axios.put(
+      "http://18.215.243.4:3000/user/" + userI._id,
+      {
+        isPaid,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          login: admin?.login,
+          password: admin?.password,
+        },
+      }
+    );
+    setUsers((prev) => {
+      return prev.map((user) => {
+        if (user._id == userI._id) {
+          user.isPaid = isPaid;
+        }
+        return user;
+      });
+    });
   };
 
   if (loading) {
@@ -386,6 +365,7 @@ const Dashboard = () => {
           onClose={handleCloseModal}
           user={selectedUser}
           onDelete={handleDeleteUser}
+          markAsPaid={markAsPaid}
         />
         <UserAddModal
           isOpen={userAddModalOpen}
