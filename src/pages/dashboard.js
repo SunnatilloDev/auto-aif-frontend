@@ -2,6 +2,8 @@ import { useRouter } from "next/router";
 import { useState, useLayoutEffect, useEffect } from "react";
 import axios from "axios";
 import UserDetailModal from "@/components/userDetailModal.js";
+import Loading from "@/components/loading.js";
+import UserAddModal from "@/components/addUserModal.js";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Dashboard");
@@ -13,8 +15,9 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [lastTap, setLastTap] = useState(0);
-  const [modalOpen, setModalOpen] = useState(false); // Modal state
-  const [selectedUser, setSelectedUser] = useState(null); // Selected user for modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userAddModalOpen, setUserAddModalOpen] = useState(false);
 
   useLayoutEffect(() => {
     const fetchAdminData = async () => {
@@ -23,7 +26,7 @@ const Dashboard = () => {
           const storedAdmin = JSON.parse(localStorage.getItem("user"));
           if (storedAdmin) {
             const response = await axios.post(
-              "//18.215.243.4:3000/user/isAdmin",
+              "http://18.215.243.4:3000/user/isAdmin",
               {
                 login: storedAdmin.email,
                 password: storedAdmin.password,
@@ -52,29 +55,28 @@ const Dashboard = () => {
     fetchAdminData();
   }, []);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (activeSection === "Users") {
-        setLoading(true);
-        try {
-          const response = await axios.get("//18.215.243.4:3000/user", {
-            headers: {
-              login: admin?.login,
-              password: admin?.password,
-            },
-          });
-          setUsers(response.data);
-        } catch (err) {
-          console.error("Failed to fetch users:", err);
-          setError("Failed to load users data. Please try again.");
-        } finally {
-          setLoading(false);
-        }
+  const fetchUsers = async () => {
+    if (activeSection === "Users") {
+      setLoading(true);
+      try {
+        const response = await axios.get("http://18.215.243.4:3000/user", {
+          headers: {
+            login: admin?.login,
+            password: admin?.password,
+          },
+        });
+        setUsers(response.data);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+        setError("Failed to load users data. Please try again.");
       }
-    };
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
-  }, [activeSection, admin]);
+  }, [admin, activeSection]);
 
   const handleLogOut = () => {
     localStorage.removeItem("user");
@@ -87,17 +89,17 @@ const Dashboard = () => {
 
   const handleInputChange = (e, userId, field) => {
     const updatedUsers = users.map((user) =>
-      user._id === userId ? { ...user, [field]: e.target.value } : user
+      user?._id === userId ? { ...user, [field]: e.target.value } : user
     );
     setUsers(updatedUsers);
   };
 
   const handleInputBlur = async (userId, field) => {
-    const userToUpdate = users.find((user) => user._id === userId);
+    const userToUpdate = users.find((user) => user?._id === userId);
 
     try {
       await axios.put(
-        `//18.215.243.4:3000/user/${userId}`,
+        `http://18.215.243.4:3000/user/${userId}`,
         {
           [field]: userToUpdate[field],
         },
@@ -127,33 +129,57 @@ const Dashboard = () => {
   };
 
   const handleRowClick = (user) => {
-    setSelectedUser(user); // Set the selected user
-    setModalOpen(true); // Open the modal
+    setSelectedUser(user);
+    setModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setModalOpen(false); // Close the modal
-    setSelectedUser(null); // Clear selected user
+    setModalOpen(false);
+    setSelectedUser(null);
   };
 
   const handleDeleteUser = async () => {
     try {
-      await axios.delete(`//18.215.243.4:3000/user/${selectedUser._id}`, {
+      await axios.delete(`http://18.215.243.4:3000/user/${selectedUser?._id}`, {
         headers: {
           login: admin?.login,
           password: admin?.password,
         },
       });
-      setUsers(users.filter((user) => user._id !== selectedUser._id)); // Update user list
-      handleCloseModal(); // Close the modal after deletion
+      setUsers(users.filter((user) => user?._id !== selectedUser?._id));
+      handleCloseModal();
     } catch (error) {
       console.error("Failed to delete user:", error);
       setError("Failed to delete user. Please try again.");
     }
   };
 
+  const handleAddUser = async (newUser) => {
+    try {
+      const response = await axios.post(
+        "http://18.215.243.4:3000/user",
+        newUser,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            login: admin?.login,
+            password: admin?.password,
+          },
+        }
+      );
+      setUsers((prevUsers) => [...prevUsers, response.data]);
+    } catch (error) {
+      console.error("Failed to add user:", error);
+      setError("Failed to add user. Please try again.");
+    }
+  };
+
+  const getIncome = () => {
+    return users.filter((user) => user.isPaid).length * 20;
+  };
+
   if (loading) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   if (error) {
@@ -194,12 +220,26 @@ const Dashboard = () => {
         </div>
         <nav className="flex flex-col p-4">
           <button
-            onClick={() => setActiveSection("Users")}
+            onClick={() => {
+              setActiveSection("Users");
+              setSidebarOpen(false);
+            }}
             className={`p-2 text-gray-800 rounded hover:bg-gray-200 ${
               activeSection === "Users" && "bg-gray-200"
             }`}
           >
             Users
+          </button>
+          <button
+            onClick={() => {
+              setActiveSection("Income");
+              setSidebarOpen(false);
+            }}
+            className={`p-2 text-gray-800 rounded hover:bg-gray-200 ${
+              activeSection === "Income" && "bg-gray-200"
+            }`}
+          >
+            Income
           </button>
         </nav>
       </aside>
@@ -243,117 +283,88 @@ const Dashboard = () => {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 overflow-y-auto">
-          {activeSection === "Dashboard" && (
-            <div className="p-4 bg-white shadow rounded-md">
-              <h2 className="text-lg font-semibold">
-                Welcome to the Dashboard
-              </h2>
-              <p className="text-gray-600">
-                This is the dashboard overview section.
-              </p>
-            </div>
-          )}
           {activeSection === "Users" && (
             <div className="p-4 bg-white shadow rounded-md">
               <h2 className="text-lg font-semibold mb-4">Users</h2>
               <div className="overflow-x-auto">
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => setUserAddModalOpen(true)}
+                    className="mb-4 p-2 bg-green-500 text-white rounded"
+                  >
+                    Add User
+                  </button>
+                  <button
+                    onClick={fetchUsers}
+                    className="mb-4 p-2 bg-blue-600 text-white rounded"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
                 <table className="min-w-full bg-white">
                   <thead>
                     <tr>
-                      <th className="px-4 py-2 border">Full Name</th>
-                      <th className="px-4 py-2 border">Number</th>
-                      <th className="px-4 py-2 border">Password</th>
-                      <th className="px-4 py-2 border">Is Done</th>
-                      <th className="px-4 py-2 border">Today's Balance</th>
-                      <th className="px-4 py-2 border">All Balance</th>
-                      <th className="px-4 py-2 border">Packages</th>
-                      <th className="px-4 py-2 border">Is Paid</th>
+                      {isMobile() ? (
+                        <>
+                          <th className="px-4 py-2 border">Name</th>
+                          <th className="px-4 py-2 border">Is Paid</th>
+                        </>
+                      ) : (
+                        <>
+                          <th className="px-4 py-2 border">Name</th>
+                          <th className="px-4 py-2 border">Number</th>
+                          <th className="px-4 py-2 border">Is Done</th>
+                          <th className="px-4 py-2 border">Today's Balance</th>
+                          <th className="px-4 py-2 border">All Balance</th>
+                          <th className="px-4 py-2 border">Packages</th>
+                          <th className="px-4 py-2 border">Is Paid</th>
+                        </>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
                     {users.map((user, index) => (
                       <tr key={index}>
-                        <td
-                          className="px-4 py-2 border"
-                          onClick={() => handleRowClick(user)}
-                        >
-                          {user.fullName}
-                        </td>
-                        <td className="px-4 py-2 border cursor-pointer">
-                          {user.number}
-                        </td>
-                        <td
-                          className="px-4 py-2 border cursor-pointer"
-                          onDoubleClick={() => {
-                            if (!isMobile()) {
-                              handleEditClick(user._id, "password");
-                            }
-                          }}
-                          onTouchEnd={() => {
-                            if (isMobile()) {
-                              handleDoubleTap(user._id, "password");
-                            }
-                          }}
-                        >
-                          {editingUser?.userId === user._id &&
-                          editingUser.field === "password" ? (
-                            <input
-                              type="text"
-                              value={user.password}
-                              onChange={(e) =>
-                                handleInputChange(e, user._id, "password")
-                              }
-                              onBlur={() =>
-                                handleInputBlur(user._id, "password")
-                              }
-                              className="border border-gray-300 rounded p-1"
-                            />
-                          ) : (
-                            user.password
-                          )}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {user.isDone ? "Yes" : "No"}
-                        </td>
-                        <td className="px-4 py-2 border">
-                          {user.todaysBalance}
-                        </td>
-                        <td className="px-4 py-2 border">{user.allBalance}</td>
-                        <td className="px-4 py-2 border">
-                          {user?.packages?.join(", ")}
-                        </td>
-                        <td
-                          className="px-4 py-2 border cursor-pointer"
-                          onDoubleClick={() => {
-                            if (!isMobile()) {
-                              handleEditClick(user._id, "isPaid");
-                            }
-                          }}
-                          onTouchEnd={() => {
-                            if (isMobile()) {
-                              handleDoubleTap(user._id, "isPaid");
-                            }
-                          }}
-                        >
-                          {editingUser?.userId === user._id &&
-                          editingUser.field === "isPaid" ? (
-                            <select
-                              value={user.isPaid}
-                              onChange={(e) =>
-                                handleInputChange(e, user._id, "isPaid")
-                              }
-                              onBlur={() => handleInputBlur(user._id, "isPaid")}
-                              className="border border-gray-300 rounded p-1"
+                        {isMobile() ? (
+                          <>
+                            <td
+                              className="px-4 py-2 border"
+                              onClick={() => handleRowClick(user)}
                             >
-                              <option value={true}>Yes</option>
-                              <option value={false}>No</option>
-                            </select>
-                          ) : user.isPaid === true ? (
-                            "Yes"
-                          ) : (
-                            "No"
-                          )}
-                        </td>
+                              {user?.fullName}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {user?.isPaid ? "Yes" : "No"}
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            {" "}
+                            <td
+                              className="px-4 py-2 border"
+                              onClick={() => handleRowClick(user)}
+                            >
+                              {user?.fullName}
+                            </td>
+                            <td className="px-4 py-2 border">{user?.number}</td>
+                            <td className="px-4 py-2 border">
+                              {user?.isDone ? "Yes" : "No"}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {user?.todaysBalance}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {user?.allBalance}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {user?.packages?.join(", ")}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {user?.isPaid ? "Yes" : "No"}
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -361,16 +372,27 @@ const Dashboard = () => {
               </div>
             </div>
           )}
+          {activeSection === "Income" && (
+            <div className="p-4 bg-white shadow rounded-md">
+              <h2 className="text-lg font-semibold mb-4">Income</h2>
+              <p>Total Income: ${getIncome()}</p>
+            </div>
+          )}
         </main>
-      </div>
 
-      {/* User Detail Modal */}
-      <UserDetailModal
-        isOpen={modalOpen}
-        onClose={handleCloseModal}
-        user={selectedUser}
-        onDelete={handleDeleteUser}
-      />
+        {/* Modals */}
+        <UserDetailModal
+          isOpen={modalOpen}
+          onClose={handleCloseModal}
+          user={selectedUser}
+          onDelete={handleDeleteUser}
+        />
+        <UserAddModal
+          isOpen={userAddModalOpen}
+          onClose={() => setUserAddModalOpen(false)}
+          onAddUser={handleAddUser}
+        />
+      </div>
     </div>
   );
 };
