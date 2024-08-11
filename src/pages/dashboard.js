@@ -23,7 +23,7 @@ const Dashboard = () => {
           const storedAdmin = JSON.parse(localStorage.getItem("user"));
           if (storedAdmin) {
             const response = await axios.post(
-              "http://18.215.243.4:3000/user/isAdmin",
+              "//18.215.243.4:3000/user/isAdmin",
               {
                 login: storedAdmin.email,
                 password: storedAdmin.password,
@@ -57,7 +57,7 @@ const Dashboard = () => {
       if (activeSection === "Users") {
         setLoading(true);
         try {
-          const response = await axios.get("http://18.215.243.4:3000/user", {
+          const response = await axios.get("//18.215.243.4:3000/user", {
             headers: {
               login: admin?.login,
               password: admin?.password,
@@ -97,7 +97,7 @@ const Dashboard = () => {
 
     try {
       await axios.put(
-        `http://18.215.243.4:3000/user/${userId}`,
+        `//18.215.243.4:3000/user/${userId}`,
         {
           [field]: userToUpdate[field],
         },
@@ -138,7 +138,7 @@ const Dashboard = () => {
 
   const handleDeleteUser = async () => {
     try {
-      await axios.delete(`http://18.215.243.4:3000/user/${selectedUser._id}`, {
+      await axios.delete(`//18.215.243.4:3000/user/${selectedUser._id}`, {
         headers: {
           login: admin?.login,
           password: admin?.password,
