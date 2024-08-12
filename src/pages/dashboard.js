@@ -4,6 +4,7 @@ import axios from "axios";
 import UserDetailModal from "@/components/userDetailModal.js";
 import Loading from "@/components/loading.js";
 import UserAddModal from "@/components/addUserModal.js";
+import { headers } from "next/headers.js";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Dashboard");
@@ -16,9 +17,7 @@ const Dashboard = () => {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedQueuer, setSelectedQueuer] = useState(null);
   const [userAddModalOpen, setUserAddModalOpen] = useState(false);
-
   useLayoutEffect(() => {
     const fetchAdminData = async () => {
       try {
@@ -38,6 +37,7 @@ const Dashboard = () => {
               setAdmin(storedAdmin);
               setLoading(false);
               router.push("/dashboard");
+              setActiveSection("Users");
             } else {
               router.push("/login");
             }
@@ -83,7 +83,7 @@ const Dashboard = () => {
             password: admin?.password,
           },
         });
-        setUsers(response.data);
+        setQueuers(response.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);
         setError("Failed to load users data. Please try again.");
@@ -127,21 +127,15 @@ const Dashboard = () => {
     }
   };
 
-  const handleDeleteQueuer = async () => {
+  const handleDeleteQueuer = async (queuer) => {
     try {
-      await axios.delete(
-        `http://18.215.243.4:3000/queuer/${selectedQueuer?._id}`,
-        {
-          headers: {
-            login: admin?.login,
-            password: admin?.password,
-          },
-        }
-      );
-      setQueuers(
-        queuers.filter((queuer) => queuer?._id !== selectedQueuer?._id)
-      );
-      handleCloseModal();
+      await axios.delete(`http://18.215.243.4:3000/queuer/${queuer?._id}`, {
+        headers: {
+          login: admin?.login,
+          password: admin?.password,
+        },
+      });
+      setQueuers(queuers.filter((queuerI) => queuer?._id !== queuerI?._id));
     } catch (error) {
       console.error("Failed to delete user:", error);
       setError("Failed to delete user. Please try again.");
@@ -194,7 +188,25 @@ const Dashboard = () => {
       });
     });
   };
-
+  let approveQueuer = (queuer) => {
+    try {
+      axios
+        .post("http://18.215.243.4:3000/user", {
+          fullName: queuer.fullName,
+          number: queuer.number,
+          password: queuer.password,
+        })
+        .then(() => {
+          handleDeleteQueuer(queuer);
+          setQueuers(queuers.filter((queuerI) => queuer?._id !== queuerI?._id));
+        })
+        .catch((err) => {
+          alert(err?.response?.data?.message ?? "Something went wrong");
+        });
+    } catch (error) {
+      alert(error.message);
+    }
+  };
   if (loading) {
     return <Loading />;
   }
@@ -416,31 +428,45 @@ const Dashboard = () => {
                 <table className="min-w-full bg-white">
                   <thead>
                     <tr>
-                      {
-                        <>
-                          <th className="px-4 py-2 border">Name</th>
-                          <th className="px-4 py-2 border">Number</th>
-                          <th className="px-4 py-2 border">Payment</th>
-                        </>
-                      }
+                      <th className="px-4 py-2 border">Name</th>
+                      <th className="px-4 py-2 border">Number</th>
+                      <th className="px-4 py-2 border">Payment</th>
+                      <th className="px-4 py-2 border">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((user, index) => (
+                    {queuers.map((queuer, index) => (
                       <tr key={index}>
                         <>
-                          {" "}
-                          <td className="px-4 py-2 border">{user?.fullName}</td>
-                          <td className="px-4 py-2 border">{user?.number}</td>
+                          <td className="px-4 py-2 border">
+                            {queuer?.fullName}
+                          </td>
+                          <td className="px-4 py-2 border">{queuer?.number}</td>
                           <td className="px-4 py-2 border">
                             <a
                               className="text-blue-600"
+                              target="__blank"
                               href={
-                                "http://18.215.243.4:3000/" + user?.paymentImage
+                                "http://18.215.243.4:3000/" +
+                                queuer?.paymentImage
                               }
                             >
                               Image
                             </a>
+                          </td>
+                          <td className="flex justify-center">
+                            <button
+                              className="px-4 py-2 mr-3 bg-red-500 text-white rounded"
+                              onClick={() => handleDeleteQueuer(queuer)}
+                            >
+                              Reject
+                            </button>
+                            <button
+                              onClick={() => approveQueuer(queuer)}
+                              className="px-4 py-2 bg-green-500 text-white rounded"
+                            >
+                              Approve
+                            </button>
                           </td>
                         </>
                       </tr>
