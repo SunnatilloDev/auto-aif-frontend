@@ -4,7 +4,6 @@ import axios from "axios";
 import UserDetailModal from "@/components/userDetailModal.js";
 import Loading from "@/components/loading.js";
 import UserAddModal from "@/components/addUserModal.js";
-import { headers } from "next/headers.js";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Dashboard");
@@ -392,9 +391,11 @@ const Dashboard = () => {
                               {user?.isDone ? "Yes" : "No"}
                             </td>
                             <td className="px-4 py-2 border">
+                              <span className="font-medium">$</span>
                               {user?.todaysBalance}
                             </td>
                             <td className="px-4 py-2 border">
+                              <span className="font-medium">$</span>
                               {user?.allBalance}
                             </td>
                             <td className="px-4 py-2 border">
@@ -479,7 +480,10 @@ const Dashboard = () => {
           {activeSection === "Income" && (
             <div className="p-4 bg-white shadow rounded-md">
               <h2 className="text-lg font-semibold mb-4">Income</h2>
-              <p>Total Income: ${getIncome()}</p>
+              <p>
+                Total Income: <span className="font-medium">$</span>
+                {getIncome()}
+              </p>
             </div>
           )}
         </main>
