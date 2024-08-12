@@ -8,15 +8,15 @@ import UserAddModal from "@/components/addUserModal.js";
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Dashboard");
   const [users, setUsers] = useState([]);
+  const [queuers, setQueuers] = useState([]);
   const [admin, setAdmin] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
-  const [lastTap, setLastTap] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedQueuer, setSelectedQueuer] = useState(null);
   const [userAddModalOpen, setUserAddModalOpen] = useState(false);
 
   useLayoutEffect(() => {
@@ -73,9 +73,27 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-
+  const fetchQueuers = async () => {
+    if (activeSection === "Queuers") {
+      setLoading(true);
+      try {
+        const response = await axios.get("http://18.215.243.4:3000/queuer", {
+          headers: {
+            login: admin?.login,
+            password: admin?.password,
+          },
+        });
+        setUsers(response.data);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+        setError("Failed to load users data. Please try again.");
+      }
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     fetchUsers();
+    fetchQueuers();
   }, [admin, activeSection]);
 
   const handleLogOut = () => {
@@ -109,6 +127,26 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteQueuer = async () => {
+    try {
+      await axios.delete(
+        `http://18.215.243.4:3000/queuer/${selectedQueuer?._id}`,
+        {
+          headers: {
+            login: admin?.login,
+            password: admin?.password,
+          },
+        }
+      );
+      setQueuers(
+        queuers.filter((queuer) => queuer?._id !== selectedQueuer?._id)
+      );
+      handleCloseModal();
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      setError("Failed to delete user. Please try again.");
+    }
+  };
   const handleAddUser = async (newUser) => {
     try {
       const response = await axios.post(
@@ -219,6 +257,17 @@ const Dashboard = () => {
             }`}
           >
             Income
+          </button>
+          <button
+            onClick={() => {
+              setActiveSection("Queuers");
+              setSidebarOpen(false);
+            }}
+            className={`p-2 text-gray-800 rounded hover:bg-gray-200 ${
+              activeSection === "Queuers" && "bg-gray-200"
+            }`}
+          >
+            Queuers
           </button>
         </nav>
       </aside>
@@ -344,6 +393,56 @@ const Dashboard = () => {
                             </td>
                           </>
                         )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          {activeSection === "Queuers" && (
+            <div className="p-4 bg-white shadow rounded-md">
+              <h2 className="text-lg font-semibold mb-4">Queuers</h2>
+              <div className="overflow-x-auto">
+                <div className="flex justify-end">
+                  <button
+                    onClick={fetchQueuers}
+                    className="mb-4 p-2 bg-blue-600 text-white rounded"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
+                <table className="min-w-full bg-white">
+                  <thead>
+                    <tr>
+                      {
+                        <>
+                          <th className="px-4 py-2 border">Name</th>
+                          <th className="px-4 py-2 border">Number</th>
+                          <th className="px-4 py-2 border">Payment</th>
+                        </>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user, index) => (
+                      <tr key={index}>
+                        <>
+                          {" "}
+                          <td className="px-4 py-2 border">{user?.fullName}</td>
+                          <td className="px-4 py-2 border">{user?.number}</td>
+                          <td className="px-4 py-2 border">
+                            <a
+                              className="text-blue-600"
+                              href={
+                                "http://18.215.243.4:3000/" + user?.paymentImage
+                              }
+                            >
+                              Image
+                            </a>
+                          </td>
+                        </>
                       </tr>
                     ))}
                   </tbody>
