@@ -14,10 +14,8 @@ const Login = () => {
       if (admin) {
         axios
           .post("http://18.215.243.4:3000/user/isAdmin", {
-            headers: {
-              login: admin?.login,
-              password: admin?.password,
-            },
+            login: admin?.login,
+            password: admin?.password,
           })
           .then((res) => {
             if (res.data) {
