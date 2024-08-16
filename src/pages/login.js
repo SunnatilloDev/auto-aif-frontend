@@ -13,7 +13,7 @@ const Login = () => {
       const admin = JSON.parse(localStorage.getItem("user"));
       if (admin) {
         axios
-          .get("//18.215.243.4:3000/user/isAdmin", {
+          .post("http://18.215.243.4:3000/user/isAdmin", {
             headers: {
               login: admin?.login,
               password: admin?.password,

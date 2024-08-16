@@ -15,12 +15,16 @@ const UserAddModal = ({ isOpen, onClose, onAddUser }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewUser((prev) => ({ ...prev, [name]: value }));
+    setNewUser((prev) => ({ ...prev, isPaid: value == "true" }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onAddUser(newUser);
     onClose();
+
+    console.log(newUser);
+
     setNewUser({
       fullName: "",
       number: "",
