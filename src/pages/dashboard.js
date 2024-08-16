@@ -56,7 +56,7 @@ const Dashboard = () => {
   let handleRefreshUsersData = async () => {
     setLoading(true);
     await axios.post(
-      "http://localhost:3000/user/refreshUsersData",
+      "http://18.215.243.4:3000/user/refreshUsersData",
       {},
       {
         headers: {
