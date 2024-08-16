@@ -26,7 +26,7 @@ const Dashboard = () => {
             const response = await axios.post(
               "http://18.215.243.4:3000/user/isAdmin",
               {
-                login: storedAdmin.email,
+                login: storedAdmin.login,
                 password: storedAdmin.password,
               }
             );
