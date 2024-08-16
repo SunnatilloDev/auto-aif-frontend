@@ -53,7 +53,21 @@ const Dashboard = () => {
 
     fetchAdminData();
   }, []);
-
+  let handleRefreshUsersData = async () => {
+    setLoading(true);
+    await axios.post(
+      "http://localhost:3000/user/refreshUsersData",
+      {},
+      {
+        headers: {
+          login: admin?.login,
+          password: admin?.password,
+        },
+      }
+    );
+    await fetchUsers();
+    setLoading(false);
+  };
   const fetchUsers = async () => {
     if (activeSection === "Users") {
       setLoading(true);
@@ -334,7 +348,7 @@ const Dashboard = () => {
                     Add User
                   </button>
                   <button
-                    onClick={fetchUsers}
+                    onClick={handleRefreshUsersData}
                     className="mb-4 p-2 bg-blue-600 text-white rounded"
                   >
                     Refresh
