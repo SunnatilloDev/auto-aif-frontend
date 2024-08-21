@@ -13,7 +13,7 @@ const Login = () => {
       const admin = JSON.parse(localStorage.getItem("user"));
       if (admin) {
         axios
-          .post("http://18.215.243.4:3000/user/isAdmin", {
+          .post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/isAdmin`, {
             login: admin?.login,
             password: admin?.password,
           })
@@ -33,7 +33,7 @@ const Login = () => {
   const handleLogin = (e) => {
     e.preventDefault();
     axios
-      .post("//18.215.243.4:3000/user/isAdmin", {
+      .post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/isAdmin`, {
         login: email,
         password,
       })

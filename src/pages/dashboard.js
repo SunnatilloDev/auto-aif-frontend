@@ -24,7 +24,7 @@ const Dashboard = () => {
           const storedAdmin = JSON.parse(localStorage.getItem("user"));
           if (storedAdmin) {
             const response = await axios.post(
-              "http://18.215.243.4:3000/user/isAdmin",
+              `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/isAdmin`,
               {
                 login: storedAdmin.login,
                 password: storedAdmin.password,
@@ -56,7 +56,7 @@ const Dashboard = () => {
   let handleRefreshUsersData = async () => {
     setLoading(true);
     await axios.post(
-      "http://18.215.243.4:3000/user/refreshUsersData",
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/refreshUsersData`,
       {},
       {
         headers: {
@@ -72,12 +72,15 @@ const Dashboard = () => {
     if (activeSection === "Users") {
       setLoading(true);
       try {
-        const response = await axios.get("http://18.215.243.4:3000/user", {
-          headers: {
-            login: admin?.login,
-            password: admin?.password,
-          },
-        });
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/user`,
+          {
+            headers: {
+              login: admin?.login,
+              password: admin?.password,
+            },
+          }
+        );
         setUsers(response.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);
@@ -90,12 +93,15 @@ const Dashboard = () => {
     if (activeSection === "Queuers") {
       setLoading(true);
       try {
-        const response = await axios.get("http://18.215.243.4:3000/queuer", {
-          headers: {
-            login: admin?.login,
-            password: admin?.password,
-          },
-        });
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/queuer`,
+          {
+            headers: {
+              login: admin?.login,
+              password: admin?.password,
+            },
+          }
+        );
         setQueuers(response.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);
@@ -126,12 +132,15 @@ const Dashboard = () => {
 
   const handleDeleteUser = async () => {
     try {
-      await axios.delete(`http://18.215.243.4:3000/user/${selectedUser?._id}`, {
-        headers: {
-          login: admin?.login,
-          password: admin?.password,
-        },
-      });
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/${selectedUser?._id}`,
+        {
+          headers: {
+            login: admin?.login,
+            password: admin?.password,
+          },
+        }
+      );
       setUsers(users.filter((user) => user?._id !== selectedUser?._id));
       handleCloseModal();
     } catch (error) {
@@ -142,12 +151,15 @@ const Dashboard = () => {
 
   const handleDeleteQueuer = async (queuer) => {
     try {
-      await axios.delete(`http://18.215.243.4:3000/queuer/${queuer?._id}`, {
-        headers: {
-          login: admin?.login,
-          password: admin?.password,
-        },
-      });
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/queuer/${queuer?._id}`,
+        {
+          headers: {
+            login: admin?.login,
+            password: admin?.password,
+          },
+        }
+      );
       setQueuers(queuers.filter((queuerI) => queuer?._id !== queuerI?._id));
     } catch (error) {
       console.error("Failed to delete user:", error);
@@ -157,7 +169,7 @@ const Dashboard = () => {
   const handleAddUser = async (newUser) => {
     try {
       const response = await axios.post(
-        "http://18.215.243.4:3000/user",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user`,
         newUser,
         {
           headers: {
@@ -180,7 +192,7 @@ const Dashboard = () => {
   let markAsPaid = (userI) => {
     let isPaid = !userI.isPaid;
     axios.put(
-      "http://18.215.243.4:3000/user/" + userI._id,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/` + userI._id,
       {
         isPaid,
       },
@@ -204,7 +216,7 @@ const Dashboard = () => {
   let approveQueuer = (queuer) => {
     try {
       axios
-        .post("http://18.215.243.4:3000/user", {
+        .post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user`, {
           fullName: queuer.fullName,
           number: queuer.number,
           password: queuer.password,
@@ -462,7 +474,7 @@ const Dashboard = () => {
                               className="text-blue-600"
                               target="__blank"
                               href={
-                                "http://18.215.243.4:3000/" +
+                                `${process.env.NEXT_PUBLIC_BACKEND_URL}/` +
                                 queuer?.paymentImage
                               }
                             >
